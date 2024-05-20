@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Socket.IO chat</title>
+    <style>
+      body {
+        margin: 0;
+        padding-bottom: 3rem;
+        padding: 10px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+      }
+
+      #form {
+        background: rgba(0, 0, 0, 0.15);
+        padding: 0.25rem;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        height: 3rem;
+        box-sizing: border-box;
+        backdrop-filter: blur(10px);
+      }
+      #input {
+        border: none;
+        padding: 0 1rem;
+        flex-grow: 1;
+        border-radius: 2rem;
+        margin: 0.25rem;
+      }
+      #input:focus {
+        outline: none;
+      }
+      #form > button {
+        background: #333;
+        border: none;
+        padding: 0 1rem;
+        margin: 0.25rem;
+        border-radius: 3px;
+        outline: none;
+        color: #fff;
+      }
+
+      #messages {
+        list-style-type: none;
+        margin: 0;
+        padding: 10px 0px;
+        display: flex;
+        gap: 10px;
+        flex-direction: column;
+      }
+      #messages > li {
+        padding: 0.5rem 1rem;
+        border-radius: 10px 10px 10px 0px;
+        width: auto;
+        margin-right: auto;
+        background-color: #d1d1d1;
+        margin: 0;
+      }
+      .newUser {
+        background: #21db00 !important;
+        color: white !important;
+        width: fit-content !important;
+      }
+
+      .username {
+        margin-bottom: 2px;
+        font-weight: bolder;
+        font-size: smaller;
+        display: block;
+      }
+      .message {
+        font-size: medium;
+      }
+    </style>
+  </head>
+  <body>
+    <ul id="messages"></ul>
+    <form id="form" onsubmit="sendMessage(event)">
+      <input id="input" type="text" autocomplete="off" /><button type="submit">
+        Send
+      </button>
+    </form>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      const socket = io("http://localhost:3000");
+      socket.on("newMessage", (id, message) => {
+        const item = document.createElement("li");
+        const p = document.createElement("span");
+        p.innerHTML = id == socket.id ? "You" : id;
+        p.classList.add("username");
+        const messageTag = document.createElement("span");
+        messageTag.innerHTML = message;
+        messageTag.classList.add("message");
+        item.appendChild(p);
+        item.appendChild(messageTag);
+
+        if (id == socket.id) {
+          item.style.marginRight = "auto";
+          item.style.backgroundColor = "#f2f2f2";
+        } else {
+          item.style.marginLeft = "auto";
+          item.style.borderRadius = "10px 10px 0px 10px";
+          item.style.borderRadius = "10px 10px 0px 10px";
+        }
+        const list = document.getElementById("messages");
+        list.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+      });
+      socket.on("newUserJoined", (stream) => {
+        const item = document.createElement("li");
+        item.classList.add("newUser");
+        if (socket.id != stream) {
+          item.innerHTML = `New User With ID : ${stream} joined this room!`;
+          item.style.marginLeft = "auto";
+          item.style.borderRadius = "10px 10px 0px 10px";
+        } else {
+          item.innerHTML = `You have joined this room!`;
+        }
+        const list = document.getElementById("messages");
+        list.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+      });
+      async function sendMessage(e) {
+        e.preventDefault();
+        const input = document.getElementById("input");
+        socket.emit("message", input.value, socket.id);
+        input.value = "";
+      }
+    </script>
+  </body>
+</html>
